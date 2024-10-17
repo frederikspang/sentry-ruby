@@ -19,7 +19,14 @@ module Sentry
 
           Sentry.with_scope do |scope|
             Sentry.with_session_tracking do
-              super
+              transaction = Sentry.start_transaction(op: "cron.sidekiq")
+              begin
+                Sentry.get_current_scope.set_span(transaction)
+
+                super
+              ensure
+                transaction.finish if transaction
+              end
             end
           end
         end
