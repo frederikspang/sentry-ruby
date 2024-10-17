@@ -19,13 +19,20 @@ module Sentry
 
           Sentry.with_scope do |scope|
             Sentry.with_session_tracking do
-              transaction = Sentry.start_transaction(op: "cron.sidekiq")
+              transaction = Sentry.start_transaction(op: "queue.sidekiq.cron", name: 'SidekiqCron/enqueue!')
               begin
                 Sentry.get_current_scope.set_span(transaction)
 
                 super
+
+                transaction.set_status("ok")
+              rescue
+                transaction.set_status("internal_error")
+                raise
               ensure
-                transaction.finish if transaction
+                if transaction
+                  transaction.finish
+                end
               end
             end
           end
