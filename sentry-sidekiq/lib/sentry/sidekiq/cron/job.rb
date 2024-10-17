@@ -12,6 +12,17 @@ module Sentry
   module Sidekiq
     module Cron
       module Job
+        def enque!(*)
+          # make sure the current thread has a clean hub
+          Sentry.clone_hub_to_current_thread
+
+          Sentry.with_scope do |scope|
+            Sentry.with_session_tracking do
+              super
+            end
+          end
+        end
+
         def save
           # validation failed, do nothing
           return false unless super
