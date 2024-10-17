@@ -12,6 +12,7 @@ module Sentry
   module Sidekiq
     module Cron
       module Job
+        # Handles sidekiq-cron < 2.0.0
         def enque!(*)
           # make sure the current thread has a clean hub
           Sentry.clone_hub_to_current_thread
@@ -22,6 +23,19 @@ module Sentry
             end
           end
         end
+
+        # Handles newest changes in sidekiq-cron 2.0.0 when released.
+        def enqueue!(*)
+          # make sure the current thread has a clean hub
+          Sentry.clone_hub_to_current_thread
+
+          Sentry.with_scope do |scope|
+            Sentry.with_session_tracking do
+              super
+            end
+          end
+        end
+
 
         def save
           # validation failed, do nothing
